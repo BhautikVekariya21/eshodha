@@ -50,4 +50,9 @@ export const api = {
   // live chat
   chat: (sessionId, message) => post('/api/chat', { session_id: sessionId, message }),
   chatHistory: (sessionId) => get(`/api/chat/${sessionId}`),
+  // services
+  services: () => get('/api/services'),
+  serviceQuote: (d) => post('/api/services/quote', d),
+  serviceRequest: (d) => post('/api/services/request', d),
+  serviceRequestStatus: (ref) => get(`/api/services/request/${ref}`),
 }

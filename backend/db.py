@@ -53,6 +53,12 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT, sender TEXT, message TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS service_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ref TEXT UNIQUE, type TEXT, name TEXT, email TEXT, phone TEXT, org TEXT,
+    details TEXT, preferred_date TEXT, status TEXT DEFAULT 'requested',
+    created_at TEXT, updated_at TEXT
+);
 """
 
 
@@ -233,6 +239,26 @@ def chat_history(session_id: str, limit: int = 40) -> list[dict]:
             "  SELECT id, sender, message, created_at FROM chat_messages WHERE session_id=? ORDER BY id DESC LIMIT ?"
             ") ORDER BY id ASC", (session_id, limit)).fetchall()
         return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------- services
+def insert_service_request(d: dict) -> str:
+    ref = _next_ref("SRV", "service_requests")
+    now = _now()
+    with _lock, _connect() as conn:
+        conn.execute(
+            "INSERT INTO service_requests (ref, type, name, email, phone, org, details, preferred_date, status, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?, 'requested', ?, ?)",
+            (ref, d["type"], d["name"], d["email"], d["phone"], d.get("org", ""),
+             d.get("details", ""), d.get("preferred_date", ""), now, now))
+    return ref
+
+
+def get_service_request(ref: str) -> dict | None:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM service_requests WHERE ref=?", (ref,)).fetchone()
+        return dict(row) if row else None
 
 
 init()

@@ -158,6 +158,29 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SERVICES TEASER */}
+      <section className="section light">
+        <div className="wrap">
+          <div className="section-head reveal" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', maxWidth: 'none', gap: 24, flexWrap: 'wrap' }}>
+            <div>
+              <span className="eyebrow">Services</span>
+              <h2 style={{ marginTop: 12 }}>More Than a Mill — A Service Partner</h2>
+            </div>
+            <Link to="/services" className="btn btn-outline btn-sm">All 9 Services</Link>
+          </div>
+          <div className="grid g4">
+            {h.servicesTeaser.map((s, i) => (
+              <Link to="/services" className={`card reveal${i ? ` d${i}` : ''}`} key={s.title} style={{ display: 'block' }}>
+                <div className="icon"><Icon name={s.icon} size={26} /></div>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+                <span className="more">Explore <Icon name="arrowR" size={14} sw={2.5} /></span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <section className="section light">
         <div className="wrap">

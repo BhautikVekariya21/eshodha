@@ -111,6 +111,7 @@ function Footer() {
             <Link to="/investors">Investor Relations</Link>
             <Link to="/sustainability">Sustainability</Link>
             <Link to="/quality">Quality &amp; Certifications</Link>
+            <Link to="/services">Processing &amp; Services</Link>
           </div>
         </div>
         <div>

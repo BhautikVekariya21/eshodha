@@ -107,6 +107,12 @@ HOME = {
             {"title": "Water positive", "text": "2.1× rainwater harvested vs. freshwater drawn"},
         ],
     },
+    "servicesTeaser": [
+        {"icon": "slit", "title": "Processing", "text": "Slitting, CTL & blanking from 10 mm — ±0.05 mm"},
+        {"icon": "pack", "title": "Warehousing & VMI", "text": "Dedicated stock, 24–48 h JIT replenishment"},
+        {"icon": "flask", "title": "NABL Lab Testing", "text": "Third-party steel tests, reports in 48 h"},
+        {"icon": "wrench", "title": "Technical Consultancy", "text": "Material selection to failure analysis"},
+    ],
 }
 
 TESTIMONIALS = [
@@ -766,6 +772,78 @@ CONTACT = {
     ],
 }
 
+SERVICES = {
+    "title": "Services Beyond the Coil",
+    "sub": ("A full-service steel partner — toll processing, warehousing & JIT supply, NABL lab testing, "
+            "technical consultancy and training, run by the same teams that make the coil."),
+    "cards": [
+        {"icon": "slit", "title": "Slitting & Cut-to-Length",
+         "text": "Multi-strand slitting from 10 mm and CTL sheets up to 6,000 mm — ±0.05 mm tolerance, stagger or straight piling, 6,000 t/month spare capacity.",
+         "price": "from ₹1,500/t"},
+        {"icon": "layers", "title": "Blanking & Blanks Management",
+         "text": "Custom rectangular, circular and tailored blanks with edge-quality control and line-side Kanban replenishment for stampers.",
+         "price": "from ₹3,200/t"},
+        {"icon": "spark", "title": "Toll Coating & Finishing",
+         "text": "Bring your own coil — galvanizing, galvalume and colour coating on idle line capacity, with full process documentation.",
+         "price": "on request"},
+        {"icon": "pack", "title": "Warehousing & VMI (JIT)",
+         "text": "Reserve dedicated stock at our 18 service centres. Vendor-managed inventory with 24–48 h line-side replenishment and online stock visibility.",
+         "price": "₹95/t/month"},
+        {"icon": "truck", "title": "Logistics & Fleet Services",
+         "text": "600+ trailers, private rail siding and port handling — EXW to DDP, coil-safe handling certified, live GPS tracking.",
+         "price": "lane-based"},
+        {"icon": "flask", "title": "NABL Lab Testing (Open to All)",
+         "text": "Third-party mechanical, chemical, metallographic and coating tests on any steel — EN 10204 3.1-equivalent reports in 48 h.",
+         "price": "from ₹1,200/sample"},
+        {"icon": "wrench", "title": "Technical Consultancy",
+         "text": "Material selection, die & forming trials, welding schedules, FEA material cards and failure analysis by our application engineers.",
+         "price": "₹18,000/day"},
+        {"icon": "target", "title": "Custom Grade Development",
+         "text": "6–12 week trial-lot process: lab melt → pilot rolling → first-article → PPAP-style sign-off. 40+ grades co-developed.",
+         "price": "programme-based"},
+        {"icon": "grad", "title": "Shodha Training Academy",
+         "text": "Certified courses for your teams — steel metallurgy, coil handling, press-shop forming and safety, on-site or at our plant.",
+         "price": "from ₹7,500/seat"},
+    ],
+    "calculator": {
+        "title": "Instant Processing Quote",
+        "text": ("Price your slitting, CTL, blanking or levelling job in real time — rates are computed by our "
+                 "pricing engine on the server, incl. material class, size factors and volume discounts."),
+        "services": [
+            {"id": "slitting", "label": "Slitting"},
+            {"id": "ctl", "label": "Cut-to-Length"},
+            {"id": "blanking", "label": "Blanking"},
+            {"id": "levelling", "label": "Levelling"},
+        ],
+        "materials": [
+            {"id": "hr", "label": "Hot Rolled"},
+            {"id": "cr", "label": "Cold Rolled"},
+            {"id": "gi", "label": "Galvanized (GI)"},
+            {"id": "ppgi", "label": "Colour Coated (PPGI)"},
+            {"id": "ss", "label": "Stainless Steel"},
+            {"id": "crgo", "label": "Electrical (CRGO)"},
+        ],
+        "turnarounds": [
+            {"id": "standard", "label": "Standard — 7 working days"},
+            {"id": "express", "label": "Express — 72 hours (+20%)"},
+            {"id": "rush", "label": "Rush — 24 hours (+35%)"},
+        ],
+    },
+    "bookingTypes": [
+        {"id": "lab", "label": "Lab Test Booking", "sla": "Report in 48 h of sample receipt"},
+        {"id": "vmi", "label": "VMI / Warehouse Reservation", "sla": "Proposal in 2 working days"},
+        {"id": "consulting", "label": "Consultancy Engagement", "sla": "Engineer assigned in 3 working days"},
+        {"id": "training", "label": "Training Programme", "sla": "Calendar within 5 working days"},
+    ],
+    "nextSteps": [
+        {"title": "Request received", "text": "You get an SRV reference instantly — quote it in every conversation."},
+        {"title": "Scoped by the service desk", "text": "We confirm specs, quantities and commercials within the SLA for your service."},
+        {"title": "Executed & documented", "text": "Work order with batch traceability; certificates and process records included."},
+        {"title": "Reviewed together", "text": "Quarterly service reviews for volume customers — OTIF, quality and cost per tonne."},
+    ],
+}
+
+
 def build_payload(path: str):
     """Return the JSON payload for a given page key."""
     payloads = {
@@ -782,5 +860,6 @@ def build_payload(path: str):
         "investors": {"company": COMPANY, "investors": INVESTORS},
         "news": {"company": COMPANY, "news": NEWS},
         "contact": {"company": COMPANY, "contact": CONTACT},
+        "services": {"company": COMPANY, "services": SERVICES},
     }
     return payloads[path]

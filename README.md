@@ -41,12 +41,18 @@ cd frontend && npm run build
 | Method | Endpoint | Purpose |
 |---|---|---|
 | GET | `/api/health` | Health check |
-| GET | `/api/home` `/api/about` `/api/products` `/api/process` `/api/infrastructure` `/api/quality` `/api/industries` `/api/sustainability` `/api/careers` `/api/investors` `/api/news` `/api/contact` | Page content |
+| GET | `/api/home` `/api/about` `/api/products` `/api/process` `/api/infrastructure` `/api/quality` `/api/industries` `/api/sustainability` `/api/careers` `/api/investors` `/api/news` `/api/contact` `/api/services` | Page content |
 | POST | `/api/rfq` | Request for quotation → stored, returns ref `RFQ-…` |
 | POST | `/api/dealer-enquiry` | Channel partner enquiry → `DEAL-…` |
 | POST | `/api/tour-booking` | Plant tour booking → `TOUR-…` |
 | POST | `/api/newsletter` | Subscribe (deduplicated) |
 | POST | `/api/applications` | Job application → `APP-…` |
+| POST | `/api/payments/initiate` → `/api/payments/{ref}/confirm` | Demo payment gateway (UPI/card/net-banking/NEFT) → `PAY-…` |
+| GET | `/api/payments/{ref}` · `/api/payments/history?email=` | Payment status & history |
+| POST | `/api/tickets` → `TCK-…` · GET `/api/tickets/{ref}` · POST `/api/tickets/{ref}/reply` | Support ticket system |
+| POST | `/api/chat` · GET `/api/chat/{session_id}` | Shodha Assist rule-based chat |
+| POST | `/api/services/quote` | Processing price engine (slitting/CTL/blanking/levelling) |
+| POST | `/api/services/request` → `SRV-…` · GET `/api/services/request/{ref}` | Service bookings (lab / VMI / consulting / training) with tracking |
 
 All POST bodies are validated with Pydantic (invalid input → HTTP 422). Submissions are stored in `backend/eshodha.db` (gitignored).
 

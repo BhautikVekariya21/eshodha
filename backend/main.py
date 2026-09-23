@@ -101,6 +101,11 @@ def api_contact():
     return build_payload("contact")
 
 
+@app.get("/api/services")
+def api_services():
+    return build_payload("services")
+
+
 # ---------------------------------------------------------------- submissions
 class RFQ(BaseModel):
     name: str = Field(min_length=2)
@@ -290,6 +295,100 @@ def payment_status(ref: str):
     if not pay:
         raise HTTPException(status_code=404, detail="Payment reference not found.")
     return pay
+
+
+# ================================================================ SERVICES
+SERVICE_BASE_RATE = {"slitting": 1800, "ctl": 2400, "blanking": 3200, "levelling": 1500}
+SERVICE_MATERIAL_MULT = {"hr": 1.0, "cr": 1.15, "gi": 1.3, "ppgi": 1.4, "ss": 2.2, "crgo": 2.5}
+SERVICE_TURNAROUND = {"standard": {"mult": 1.0, "days": "5–7 working days"},
+                      "express": {"mult": 1.2, "days": "3 working days"},
+                      "rush": {"mult": 1.35, "days": "1 working day"}}
+
+
+class ServiceQuote(BaseModel):
+    service: str = Field(pattern="^(slitting|ctl|blanking|levelling)$")
+    material: str = Field(pattern="^(hr|cr|gi|ppgi|ss|crgo)$")
+    thickness_mm: float = Field(gt=0, le=25)
+    width_mm: float = Field(gt=0, le=2000)
+    tonnage: float = Field(gt=0, le=100000)
+    turnaround: str = Field(pattern="^(standard|express|rush)$", default="standard")
+
+
+class ServiceRequest(BaseModel):
+    type: str = Field(pattern="^(lab|vmi|consulting|training)$")
+    name: str = Field(min_length=2)
+    email: str = Field(pattern=EMAIL_RE)
+    phone: str = Field(min_length=7)
+    org: str = ""
+    details: str = Field(default="", max_length=1500)
+    preferred_date: str = ""
+
+
+@app.post("/api/services/quote")
+def service_quote(q: ServiceQuote):
+    """Server-side pricing engine for coil processing jobs."""
+    base = SERVICE_BASE_RATE[q.service]
+    mat_mult = SERVICE_MATERIAL_MULT[q.material]
+    if q.thickness_mm <= 0.5:
+        th_mult, th_note = 1.5, "ultra-thin gauge factor"
+    elif q.thickness_mm <= 1.0:
+        th_mult, th_note = 1.25, "thin gauge factor"
+    elif q.thickness_mm <= 3.0:
+        th_mult, th_note = 1.0, "standard gauge"
+    else:
+        th_mult, th_note = 0.95, "heavy gauge efficiency"
+    if q.width_mm < 100:
+        w_mult, w_note = 1.25, "narrow-strip factor"
+    elif q.width_mm < 300:
+        w_mult, w_note = 1.1, "slit-width factor"
+    else:
+        w_mult, w_note = 1.0, "full-width"
+    if q.tonnage >= 1000:
+        vol_mult, vol_note = 0.88, "volume discount 12%"
+    elif q.tonnage >= 500:
+        vol_mult, vol_note = 0.92, "volume discount 8%"
+    elif q.tonnage >= 100:
+        vol_mult, vol_note = 0.96, "volume discount 4%"
+    else:
+        vol_mult, vol_note = 1.0, "under 100 t — no discount"
+    ta = SERVICE_TURNAROUND[q.turnaround]
+
+    rate = base * mat_mult * th_mult * w_mult * vol_mult * ta["mult"]
+    subtotal = round(rate * q.tonnage, 2)
+    breakup = _gst_breakup(subtotal)
+    return {
+        "ok": True,
+        "service": q.service, "material": q.material, "turnaround": q.turnaround,
+        "rate_per_tonne": round(rate, 2),
+        "tonnage": q.tonnage,
+        "subtotal": subtotal,
+        "gst": breakup["gst"],
+        "total": breakup["total"],
+        "timeline": ta["days"],
+        "factors": [
+            {"label": "Base rate", "value": f"₹{base:,.0f}/t"},
+            {"label": "Material class", "value": f"×{mat_mult}"},
+            {"label": f"Thickness {q.thickness_mm} mm", "value": f"×{th_mult} ({th_note})"},
+            {"label": f"Width {q.width_mm:.0f} mm", "value": f"×{w_mult} ({w_note})"},
+            {"label": f"Volume {q.tonnage:,.0f} t", "value": f"×{vol_mult} ({vol_note})"},
+            {"label": "Turnaround", "value": f"×{ta['mult']} — {ta['days']}"},
+        ],
+    }
+
+
+@app.post("/api/services/request")
+def service_request(s: ServiceRequest):
+    ref = db.insert_service_request(s.model_dump())
+    return {"ok": True, "ref": ref,
+            "message": f"Request {ref} logged — our services desk will confirm scope and commercials within the SLA for this service."}
+
+
+@app.get("/api/services/request/{ref}")
+def service_request_status(ref: str):
+    req = db.get_service_request(ref.upper())
+    if not req:
+        raise HTTPException(status_code=404, detail="Service request not found — check the reference (format SRV-2026-0001).")
+    return req
 
 
 # ================================================================ SUPPORT TICKETS

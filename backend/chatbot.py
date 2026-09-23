@@ -55,6 +55,26 @@ RULES = [
      "our 8D/CAPA process responds within 8 business hours and closes root-cause within 30 days. Current claim rate: under 0.4%.",
      ["Raise a ticket", "Talk to human"]),
 
+    (["slit", "cut to length", "cut-to-length", "blanking", "levelling", "toll", "process my coil", "processing"],
+     "Yes, we toll-process: multi-strand slitting from 10 mm, CTL up to 6,000 mm, blanking and levelling — "
+     "6,000 t/month spare capacity with ±0.05 mm tolerance. Get an instant price at /services with our processing calculator.",
+     ["Get processing quote", "Warehousing & VMI", "Talk to human"]),
+
+    (["lab test", "lab", "nabl", "test a sample", "third party test", "utr testing"],
+     "Our NABL-accredited lab tests third-party samples — tensile, chemistry, hardness, coating weight, metallography — "
+     "with reports in 48 hours from ₹1,200/sample. Book at /services (Lab Test Booking) and courier your specimen.",
+     ["Book lab test", "Talk to human"]),
+
+    (["vmi", "warehouse", "warehousing", "just in time", "jit", "stock for me", "dedicated stock"],
+     "Vendor-Managed Inventory: reserve dedicated stock at our 18 service centres with 24–48 h line-side replenishment, "
+     "online stock visibility and ₹95/t/month storage. Request a proposal at /services (VMI reservation).",
+     ["Warehousing & VMI", "Delivery time", "Talk to human"]),
+
+    (["training", "academy", "course", "workshop", "certification course"],
+     "Shodha Academy runs certified programmes for customer teams — steel metallurgy, coil handling, press-shop forming "
+     "and safety — on-site or at our plant, from ₹7,500/seat. Request a calendar at /services (Training Programme).",
+     ["Book training", "Plant visit", "Talk to human"]),
+
     (["grade", "hr", "cr", "gi", "gl", "ppgi", "ppgl", "stainless", "crgo", "ahrss", "galvalume", "coating", "coil"],
      "We make every coil grade in-house: HR (IS 2062, ASTM A36, SAE), CR (IS 513 O–EDD), GI/GL, PPGI/PPGL, stainless 304/316L/430, "
      "CRGO/CRNGO and auto AHSS (DP590–DP1180). Full specs and datasheets live at /products.",
