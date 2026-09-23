@@ -7,6 +7,13 @@ import { Icon, SectionHead, TickList, Testimonials, StatBand, CtaBand } from '..
 export default function Home() {
   useTitle('eShodha Industries — Integrated Steel Coil Manufacturing | HR, CR, GI, PPGI, Stainless Coils')
   const { data, loading, error } = usePageData(api.home)
+  const particles = React.useMemo(
+    () => Array.from({ length: 16 }, (_, i) => ({
+      left: (i * 61 + 7) % 100,
+      size: 3 + ((i * 7) % 6),
+      dur: 9 + ((i * 13) % 9),
+      delay: (i * 1.37) % 11,
+    })), [])
   if (loading) return <Loading />
   if (error) return <ErrorBox message={error} />
   const { home: h, testimonials, news } = data
@@ -16,11 +23,19 @@ export default function Home() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-bg" style={{ backgroundImage: `url('${h.heroImage}')` }} />
+        <div className="hero-particles" aria-hidden="true">
+          {particles.map((p, i) => (
+            <span key={i} style={{
+              left: p.left + '%', width: p.size, height: p.size,
+              animationDuration: p.dur + 's', animationDelay: p.delay + 's',
+            }} />
+          ))}
+        </div>
         <div className="wrap">
-          <span className="kicker">{h.kicker}</span>
-          <h1>{h.heroTitleA} <em>{h.heroTitleB}</em></h1>
-          <p>{h.heroText}</p>
-          <div className="hero-actions">
+          <span className="kicker hero-anim ha1">{h.kicker}</span>
+          <h1 className="hero-anim ha2">{h.heroTitleA} <em>{h.heroTitleB}</em></h1>
+          <p className="hero-anim ha3">{h.heroText}</p>
+          <div className="hero-actions hero-anim ha4">
             <Link to="/products" className="btn btn-primary">Explore Products <Icon name="arrowR" size={16} sw={2.5} /></Link>
             <Link to="/process" className="btn btn-ghost">Take the Plant Tour <Icon name="play" size={16} sw={2} /></Link>
           </div>
@@ -34,15 +49,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTOR CHIPS */}
+      {/* SECTOR MARQUEE */}
       <section className="section tight">
         <div className="wrap">
-          <div className="section-head center reveal" style={{ marginBottom: 30 }}>
+          <div className="section-head center reveal in" style={{ marginBottom: 30 }}>
             <span className="eyebrow">Trusted Across Sectors</span>
             <h2 style={{ fontSize: 24 }}>One Supplier. Every Steel-Consuming Industry.</h2>
           </div>
-          <div className="chips reveal" style={{ justifyContent: 'center' }}>
-            {h.sectorChips.map((c, i) => <span className={`chip${i === 0 ? ' hl' : ''}`} key={i}>{c}</span>)}
+          <div className="marquee">
+            <div className="marquee-track">
+              {[...h.sectorChips, ...h.sectorChips].map((c, i) => (
+                <span className={`chip${i % h.sectorChips.length === 0 ? ' hl' : ''}`} key={i}>{c}</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -50,8 +69,8 @@ export default function Home() {
       {/* ABOUT TEASER */}
       <section className="section light">
         <div className="wrap split">
-          <div className="media reveal"><img src={h.about.image} alt="Molten steel being poured at eShodha Industries BOF shop" /></div>
-          <div className="reveal d1">
+          <div className="media reveal left"><img src={h.about.image} alt="Molten steel being poured at eShodha Industries BOF shop" /></div>
+          <div className="reveal right d1">
             <span className="eyebrow">Who We Are</span>
             <h2 style={{ fontSize: 'clamp(26px,3.6vw,38px)', margin: '14px 0 16px' }}>{h.about.title}</h2>
             <p className="lead" style={{ fontSize: 16.5 }}>{h.about.text}</p>
@@ -147,8 +166,8 @@ export default function Home() {
       {/* SUSTAINABILITY */}
       <section className="section">
         <div className="wrap split">
-          <div className="media reveal"><img src={h.sustainability.image} alt="eShodha Industries green steel plant with solar arrays" /></div>
-          <div className="reveal d1">
+          <div className="media reveal left"><img src={h.sustainability.image} alt="eShodha Industries green steel plant with solar arrays" /></div>
+          <div className="reveal right d1">
             <span className="eyebrow">Sustainability</span>
             <h2 style={{ fontSize: 'clamp(26px,3.6vw,38px)', margin: '14px 0 16px' }}>{h.sustainability.title}</h2>
             <p className="lead" style={{ fontSize: 16.5 }}>{h.sustainability.text}</p>

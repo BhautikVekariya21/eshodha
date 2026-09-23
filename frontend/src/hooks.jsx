@@ -78,7 +78,14 @@ export function usePageData(loader) {
 export function Loading() {
   return (
     <section className="section"><div className="wrap">
-      <div className="loading-block"><span className="spinner" />Loading…</div>
+      <div className="skeleton-head">
+        <div className="skel" style={{ width: 150, height: 13 }} />
+        <div className="skel" style={{ width: '56%', height: 38 }} />
+        <div className="skel" style={{ width: '72%', height: 15 }} />
+      </div>
+      <div className="skeleton-grid">
+        {Array.from({ length: 6 }).map((_, i) => <div className="skel" key={i} style={{ height: 190 }} />)}
+      </div>
     </div></section>
   )
 }

@@ -136,6 +136,22 @@ function Footer() {
   )
 }
 
+function ScrollProgress() {
+  const ref = React.useRef(null)
+  React.useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      const pct = max > 0 ? (h.scrollTop / max) * 100 : 0
+      if (ref.current) ref.current.style.width = pct + '%'
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return <div className="scroll-progress" ref={ref} aria-hidden="true" />
+}
+
 export default function Layout() {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
@@ -176,6 +192,7 @@ export default function Layout() {
 
   return (
     <>
+      <ScrollProgress />
       <div className="topbar">
         <div className="wrap">
           <div className="tb-group">
@@ -235,7 +252,9 @@ export default function Layout() {
       </header>
 
       <main>
-        <Outlet />
+        <div className="page-fade" key={location.pathname}>
+          <Outlet />
+        </div>
       </main>
 
       <Footer />
