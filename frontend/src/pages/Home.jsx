@@ -166,7 +166,7 @@ export default function Home() {
               <span className="eyebrow">Services</span>
               <h2 style={{ marginTop: 12 }}>More Than a Mill — A Service Partner</h2>
             </div>
-            <Link to="/services" className="btn btn-outline btn-sm">All 9 Services</Link>
+            <Link to="/services" className="btn btn-outline btn-sm">Explore All Services</Link>
           </div>
           <div className="grid g4">
             {h.servicesTeaser.map((s, i) => (

@@ -205,7 +205,7 @@ export default function Services() {
       {/* SERVICE CATALOGUE */}
       <section className="section">
         <div className="wrap">
-          <SectionHead eyebrow="Service Catalogue" title="Nine Ways We Work For You"
+          <SectionHead eyebrow="Service Catalogue" title={`${s.cards.length} Ways We Work For You`}
             text="Everything below runs on spare capacity of our own plants and labs — which is why turnaround is measured in days, not weeks." />
           <div className="grid g3">
             {s.cards.map((c, i) => (

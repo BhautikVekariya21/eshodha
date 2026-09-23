@@ -298,7 +298,8 @@ def payment_status(ref: str):
 
 
 # ================================================================ SERVICES
-SERVICE_BASE_RATE = {"slitting": 1800, "ctl": 2400, "blanking": 3200, "levelling": 1500}
+SERVICE_BASE_RATE = {"slitting": 1800, "ctl": 2400, "blanking": 3200, "levelling": 1500,
+                     "pickling": 2600, "recoiling": 900, "polishing": 2200}
 SERVICE_MATERIAL_MULT = {"hr": 1.0, "cr": 1.15, "gi": 1.3, "ppgi": 1.4, "ss": 2.2, "crgo": 2.5}
 SERVICE_TURNAROUND = {"standard": {"mult": 1.0, "days": "5–7 working days"},
                       "express": {"mult": 1.2, "days": "3 working days"},
@@ -306,7 +307,7 @@ SERVICE_TURNAROUND = {"standard": {"mult": 1.0, "days": "5–7 working days"},
 
 
 class ServiceQuote(BaseModel):
-    service: str = Field(pattern="^(slitting|ctl|blanking|levelling)$")
+    service: str = Field(pattern="^(slitting|ctl|blanking|levelling|pickling|recoiling|polishing)$")
     material: str = Field(pattern="^(hr|cr|gi|ppgi|ss|crgo)$")
     thickness_mm: float = Field(gt=0, le=25)
     width_mm: float = Field(gt=0, le=2000)
@@ -315,7 +316,7 @@ class ServiceQuote(BaseModel):
 
 
 class ServiceRequest(BaseModel):
-    type: str = Field(pattern="^(lab|vmi|consulting|training)$")
+    type: str = Field(pattern="^(lab|vmi|consulting|training|scrap|engineer|prototype|export)$")
     name: str = Field(min_length=2)
     email: str = Field(pattern=EMAIL_RE)
     phone: str = Field(min_length=7)

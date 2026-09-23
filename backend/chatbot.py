@@ -75,6 +75,26 @@ RULES = [
      "and safety — on-site or at our plant, from ₹7,500/seat. Request a calendar at /services (Training Programme).",
      ["Book training", "Plant visit", "Talk to human"]),
 
+    (["scrap", "buy back", "buyback", "skeleton", "offcut", "reverse logistics"],
+     "We buy back your skeleton scrap and process offcuts — briquetting, EPR documentation and circularity credits for your "
+     "ESG reporting. Market-linked pricing; request a quote at /services (Scrap Buy-Back Programme).",
+     ["Book scrap pickup", "Sustainability", "Talk to human"]),
+
+    (["resident engineer", "embedded engineer", "application engineer", "engineer deputation"],
+     "Our Embedded Engineer Programme stations an eShodha application engineer inside your plant — forming trials, die support "
+     "and consumption planning at ₹1.4L/month. Request deployment at /services (Embedded Engineer).",
+     ["Talk to human", "Get a quote"]),
+
+    (["edi", "api", "portal", "digital", "co2 footprint", "carbon report", "scope 3"],
+     "Digital Supply Services: EDI/API integration, a live stock portal, consumption analytics and per-coil CO₂ footprint "
+     "reports for your scope-3 accounting — free for account customers. Activate at /services (Digital Supply Services).",
+     ["Payment terms", "Talk to human"]),
+
+    (["prototype", "sample lot", "first article", "trial lot"],
+     "Prototype and sample lots: small first-article runs with full traceability in 4–6 weeks, including FEA material cards "
+     "and PPAP-style documentation. Book at /services (Prototype / Sample Lot).",
+     ["Custom grade development", "Get a quote"]),
+
     (["grade", "hr", "cr", "gi", "gl", "ppgi", "ppgl", "stainless", "crgo", "ahrss", "galvalume", "coating", "coil"],
      "We make every coil grade in-house: HR (IS 2062, ASTM A36, SAE), CR (IS 513 O–EDD), GI/GL, PPGI/PPGL, stainless 304/316L/430, "
      "CRGO/CRNGO and auto AHSS (DP590–DP1180). Full specs and datasheets live at /products.",
