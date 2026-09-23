@@ -15,6 +15,8 @@ import Careers from './pages/Careers.jsx'
 import Investors from './pages/Investors.jsx'
 import News from './pages/News.jsx'
 import Contact from './pages/Contact.jsx'
+import Payments from './pages/Payments.jsx'
+import Support from './pages/Support.jsx'
 import './styles.css'
 
 function Root() {
@@ -47,6 +49,8 @@ const router = createBrowserRouter([
       { path: 'investors', element: <Investors /> },
       { path: 'news', element: <News /> },
       { path: 'contact', element: <Contact /> },
+      { path: 'payments', element: <Payments /> },
+      { path: 'support', element: <Support /> },
       { path: '*', element: <NotFound /> },
     ],
   },

@@ -1,4 +1,4 @@
-"""SQLite persistence for form submissions (RFQs, dealer enquiries, tours, newsletter, applications)."""
+"""SQLite persistence: content submissions, payments, support tickets, chat."""
 import sqlite3
 import threading
 from datetime import datetime, timezone
@@ -32,6 +32,27 @@ CREATE TABLE IF NOT EXISTS applications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ref TEXT UNIQUE, job TEXT, name TEXT, email TEXT, phone TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ref TEXT UNIQUE, pi_number TEXT, customer_name TEXT, email TEXT, phone TEXT,
+    amount REAL, currency TEXT DEFAULT 'INR', method TEXT,
+    status TEXT DEFAULT 'pending', detail TEXT, txn_id TEXT,
+    created_at TEXT, completed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ref TEXT UNIQUE, name TEXT, email TEXT, phone TEXT, category TEXT,
+    priority TEXT, order_ref TEXT, subject TEXT, message TEXT,
+    status TEXT DEFAULT 'open', created_at TEXT, updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS ticket_replies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_ref TEXT, author TEXT, message TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT, sender TEXT, message TEXT, created_at TEXT
+);
 """
 
 
@@ -57,6 +78,7 @@ def _next_ref(prefix: str, table: str) -> str:
         return f"{prefix}-{datetime.now().year}-{n:04d}"
 
 
+# ---------------------------------------------------------------- submissions
 def insert_rfq(d: dict) -> str:
     ref = _next_ref("RFQ", "rfqs")
     with _lock, _connect() as conn:
@@ -91,7 +113,6 @@ def insert_tour(d: dict) -> str:
 
 
 def insert_newsletter(email: str) -> bool:
-    """Returns True if newly subscribed, False if already present."""
     with _lock, _connect() as conn:
         try:
             conn.execute("INSERT INTO newsletter (email, created_at) VALUES (?,?)", (email, _now()))
@@ -107,6 +128,111 @@ def insert_application(d: dict) -> str:
             "INSERT INTO applications (ref, job, name, email, phone, created_at) VALUES (?,?,?,?,?,?)",
             (ref, d["job"], d["name"], d["email"], d["phone"], _now()))
     return ref
+
+
+# ---------------------------------------------------------------- payments
+def create_payment(d: dict) -> str:
+    ref = _next_ref("PAY", "payments")
+    with _lock, _connect() as conn:
+        conn.execute(
+            "INSERT INTO payments (ref, pi_number, customer_name, email, phone, amount, method, status, created_at) "
+            "VALUES (?,?,?,?,?,?,?, 'pending', ?)",
+            (ref, d["pi_number"], d["customer_name"], d["email"], d["phone"],
+             d["amount"], d["method"], _now()))
+    return ref
+
+
+def complete_payment(ref: str, status: str, detail: str, txn_id: str | None):
+    with _lock, _connect() as conn:
+        conn.execute(
+            "UPDATE payments SET status=?, detail=?, txn_id=?, completed_at=? WHERE ref=?",
+            (status, detail, txn_id, _now(), ref))
+
+
+def get_payment(ref: str) -> dict | None:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM payments WHERE ref=?", (ref,)).fetchone()
+        return dict(row) if row else None
+
+
+def payments_by_email(email: str) -> list[dict]:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ref, pi_number, amount, currency, method, status, txn_id, created_at "
+            "FROM payments WHERE email=? ORDER BY id DESC LIMIT 25", (email,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------- support tickets
+AUTO_REPLIES = {
+    "urgent": ("Ticket escalated to the plant control room. An on-call engineer will call you within 2 hours.", "in_progress"),
+    "high":   ("Routed to the Quality & Delivery desk — first response within 8 business hours.", "open"),
+    "medium": ("Logged with the service desk — first response within 1 business day.", "open"),
+    "low":    ("Logged with the documents desk — response within 2 business days.", "open"),
+}
+
+
+def create_ticket(d: dict) -> str:
+    ref = _next_ref("TCK", "tickets")
+    priority = d["priority"]
+    auto_msg, status = AUTO_REPLIES.get(priority, AUTO_REPLIES["medium"])
+    now = _now()
+    with _lock, _connect() as conn:
+        conn.execute(
+            "INSERT INTO tickets (ref, name, email, phone, category, priority, order_ref, subject, message, status, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            (ref, d["name"], d["email"], d["phone"], d["category"], priority,
+             d.get("order_ref", ""), d["subject"], d["message"], status, now, now))
+        conn.execute(
+            "INSERT INTO ticket_replies (ticket_ref, author, message, created_at) VALUES (?,?,?,?)",
+            (ref, "support", auto_msg, now))
+    return ref
+
+
+def get_ticket(ref: str) -> dict | None:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM tickets WHERE ref=?", (ref,)).fetchone()
+        if not row:
+            return None
+        ticket = dict(row)
+        replies = conn.execute(
+            "SELECT author, message, created_at FROM ticket_replies WHERE ticket_ref=? ORDER BY id",
+            (ref,)).fetchall()
+        ticket["replies"] = [dict(r) for r in replies]
+        return ticket
+
+
+def add_ticket_reply(ref: str, author: str, message: str) -> bool:
+    with _lock, _connect() as conn:
+        row = conn.execute("SELECT id FROM tickets WHERE ref=?", (ref,)).fetchone()
+        if not row:
+            return False
+        conn.execute(
+            "INSERT INTO ticket_replies (ticket_ref, author, message, created_at) VALUES (?,?,?,?)",
+            (ref, author, message, _now()))
+        conn.execute("UPDATE tickets SET updated_at=? WHERE ref=?", (_now(), ref))
+    return True
+
+
+# ---------------------------------------------------------------- chat
+def chat_add(session_id: str, sender: str, message: str):
+    with _lock, _connect() as conn:
+        conn.execute(
+            "INSERT INTO chat_messages (session_id, sender, message, created_at) VALUES (?,?,?,?)",
+            (session_id, sender, message, _now()))
+
+
+def chat_history(session_id: str, limit: int = 40) -> list[dict]:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT sender, message, created_at FROM ("
+            "  SELECT id, sender, message, created_at FROM chat_messages WHERE session_id=? ORDER BY id DESC LIMIT ?"
+            ") ORDER BY id ASC", (session_id, limit)).fetchall()
+        return [dict(r) for r in rows]
 
 
 init()

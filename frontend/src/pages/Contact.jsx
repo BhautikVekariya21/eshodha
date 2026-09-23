@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api.js'
 import { usePageData, useTitle, Loading, ErrorBox } from '../hooks.jsx'
 import { Icon, SectionHead, TickList, Accordion, FormSuccess, FormError } from '../components/UI.jsx'
@@ -106,6 +107,10 @@ export default function Contact() {
                 <div><b>{t.title}</b><p>{t.lines.map((l, j) => <React.Fragment key={j}>{l}<br /></React.Fragment>)}</p></div>
               </div>
             ))}
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 56 }}>
+              <Link to="/payments" className="btn btn-dark"><Icon name="card" size={16} /> Pay an Invoice Online</Link>
+              <Link to="/support" className="btn btn-outline"><Icon name="headset" size={16} /> Customer Support &amp; Tickets</Link>
+            </div>
           </div>
         </div>
       </section>

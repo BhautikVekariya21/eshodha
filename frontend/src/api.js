@@ -38,4 +38,16 @@ export const api = {
   submitTour: (d) => post('/api/tour-booking', d),
   submitNewsletter: (email) => post('/api/newsletter', { email }),
   submitApplication: (d) => post('/api/applications', d),
+  // payments
+  initPayment: (d) => post('/api/payments/initiate', d),
+  confirmPayment: (ref, d) => post(`/api/payments/${ref}/confirm`, d),
+  payment: (ref) => get(`/api/payments/${ref}`),
+  paymentHistory: (email) => get(`/api/payments/history?email=${encodeURIComponent(email)}`),
+  // support
+  createTicket: (d) => post('/api/tickets', d),
+  ticket: (ref) => get(`/api/tickets/${ref}`),
+  replyTicket: (ref, message) => post(`/api/tickets/${ref}/reply`, { message }),
+  // live chat
+  chat: (sessionId, message) => post('/api/chat', { session_id: sessionId, message }),
+  chatHistory: (sessionId) => get(`/api/chat/${sessionId}`),
 }

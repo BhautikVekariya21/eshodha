@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BrandMark, Icon } from './UI.jsx'
+import ChatWidget from './ChatWidget.jsx'
 import { api } from '../api.js'
 
 const CARET = <Icon name="caret" size={10} sw={3} className="caret" />
@@ -30,6 +31,8 @@ const NAV = [
   { to: '/sustainability', label: 'Sustainability' },
   {
     to: '/careers', label: 'More', caret: CARET, children: [
+      { to: '/payments', label: 'Payments', small: 'Pay PIs online — UPI · cards · NEFT' },
+      { to: '/support', label: 'Customer Support', small: 'Tickets, live chat & SLAs' },
       { to: '/careers', label: 'Careers', small: "Join India's new-age steelmaker" },
       { to: '/investors', label: 'Investor Relations', small: 'Reports, results & governance' },
       { to: '/news', label: 'News & Media', small: 'Press releases & events' },
@@ -180,6 +183,8 @@ export default function Layout() {
           </div>
           <div className="tb-group">
             <span className="tb-item"><Icon name="check" size={14} sw={2.5} /> ISO 9001 : 2015 Certified</span>
+            <Link to="/payments">Pay Online</Link>
+            <Link to="/support">Support</Link>
             <Link to="/investors">Investors</Link>
             <Link to="/news">Media</Link>
           </div>
@@ -233,6 +238,8 @@ export default function Layout() {
       </main>
 
       <Footer />
+
+      <ChatWidget />
 
       <button className={`back-top${showTop ? ' show' : ''}`} aria-label="Back to top"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
