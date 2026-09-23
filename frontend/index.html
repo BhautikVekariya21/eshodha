@@ -4,13 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="eShodha Industries is an integrated steel manufacturer producing all grades of steel coils end-to-end — from iron ore to finished, tested and dispatched coils." />
+  <script>
+    /* set theme before first paint to avoid a flash */
+    (function () {
+      try {
+        var t = localStorage.getItem('eshodha-theme')
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light')
+      }
+    })()
+  </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%230b1220'/%3E%3Ccircle cx='24' cy='24' r='13' stroke='%23f2611a' stroke-width='4' fill='none'/%3E%3Ccircle cx='24' cy='24' r='5' stroke='%23ffb547' stroke-width='3' fill='none'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet" />
   <title>eShodha Industries — Integrated Steel Coil Manufacturing</title>
+  <style>
+    /* ---- Preloader (self-contained so it shows before the JS bundle) ---- */
+    #preloader{position:fixed;inset:0;z-index:999;background:radial-gradient(800px 400px at 70% 18%,rgba(255,94,19,.13),transparent 62%),radial-gradient(600px 320px at 12% 90%,rgba(74,127,181,.12),transparent 60%),#070c18;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .55s ease,visibility .55s ease}
+    #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
+    .pl-svg{width:112px;height:112px}
+    .pl-arc{transform-origin:60px 60px;animation:plSpin 1.15s linear infinite}
+    .pl-ring{transform-origin:60px 60px;animation:plSpinRev 7s linear infinite}
+    @keyframes plSpin{to{transform:rotate(360deg)}}
+    @keyframes plSpinRev{to{transform:rotate(-360deg)}}
+    .pl-name{font-family:'Barlow Condensed',system-ui,sans-serif;font-size:30px;letter-spacing:.14em;color:#fff;font-weight:700;text-transform:uppercase}
+    .pl-name b{background:linear-gradient(96deg,#ff8a3d,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .pl-bar{width:190px;height:3px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+    .pl-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#ff5e13,#ffd166);animation:plBar 1.4s cubic-bezier(.3,.6,.3,1) forwards}
+    @keyframes plBar{to{width:100%}}
+    .pl-tag{font-size:10.5px;letter-spacing:.34em;color:#74859c;font-weight:700}
+    @media(prefers-reduced-motion:reduce){.pl-arc,.pl-ring{animation:none}}
+  </style>
 </head>
 <body>
+  <div id="preloader" aria-hidden="true">
+    <svg class="pl-svg" viewBox="0 0 120 120" fill="none">
+      <defs>
+        <linearGradient id="plg" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#ff5e13" />
+          <stop offset="1" stop-color="#ffd166" />
+        </linearGradient>
+      </defs>
+      <circle class="pl-arc" cx="60" cy="60" r="54" stroke="url(#plg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="150 190" />
+      <g class="pl-ring">
+        <circle cx="60" cy="60" r="30" stroke="#ff5e13" stroke-width="6" />
+        <circle cx="60" cy="60" r="12" stroke="#ffb347" stroke-width="4.5" />
+      </g>
+    </svg>
+    <div class="pl-name">eSHODHA<b> INDUSTRIES</b></div>
+    <div class="pl-bar"><i></i></div>
+    <div class="pl-tag">FORGING STEEL · SINCE 1996</div>
+  </div>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

@@ -158,6 +158,19 @@ export default function Layout() {
   const [showTop, setShowTop] = React.useState(false)
   const [openSub, setOpenSub] = React.useState(null)
   const location = useLocation()
+  const [theme, setTheme] = React.useState(
+    () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')) || 'light'
+  )
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    const root = document.documentElement
+    root.classList.add('theming')
+    root.setAttribute('data-theme', next)
+    try { localStorage.setItem('eshodha-theme', next) } catch { /* ignore */ }
+    setTheme(next)
+    setTimeout(() => root.classList.remove('theming'), 500)
+  }
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -239,6 +252,11 @@ export default function Layout() {
             ))}
           </ul>
           <div className="nav-cta">
+            <button className="theme-toggle" onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+              <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+            </button>
             <Link to="/contact" className="btn btn-primary btn-sm">Get a Quote</Link>
             <button className={`hamburger${menuOpen ? ' open' : ''}`} aria-label="Menu"
               onClick={() => {

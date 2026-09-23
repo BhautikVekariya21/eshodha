@@ -22,6 +22,18 @@ import './styles.css'
 
 function Root() {
   useGlobalReveal()
+  // dismiss the static preloader from index.html
+  React.useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const wait = reduce ? 200 : 1500
+    const t1 = setTimeout(() => {
+      const p = document.getElementById('preloader')
+      if (!p) return
+      p.classList.add('done')
+      setTimeout(() => p.remove(), 650)
+    }, wait)
+    return () => clearTimeout(t1)
+  }, [])
   return <Layout />
 }
 

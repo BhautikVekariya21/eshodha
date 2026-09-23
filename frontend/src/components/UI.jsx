@@ -47,6 +47,8 @@ const PATHS = {
   close: <path d="M18 6 6 18M6 6l12 12" />,
   send: <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />,
   ticket: <><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z" /><path d="M13 5v2m0 4v2m0 4v2" /></>,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" /></>,
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
   truck: <><path d="M14 17V5a1 1 0 0 0-1-1H2v13h3" /><path d="M14 8h4l3 4v5h-3" /><circle cx="7.5" cy="17.5" r="2" /><circle cx="16.5" cy="17.5" r="2" /></>,
   wrench: <path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18a2.1 2.1 0 0 0 3 3l5.7-5.7a4.5 4.5 0 0 0 6-6L14.5 12l-2.5-2.5 2.7-3.2z" />,
   linkedin: <path fill="currentColor" stroke="none" d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.24 8.31h4.52V23H.24V8.31zM8.34 8.31h4.33v2h.06c.6-1.14 2.08-2.34 4.28-2.34 4.57 0 5.42 3.01 5.42 6.92V23h-4.52v-7.1c0-1.7-.03-3.88-2.36-3.88-2.37 0-2.73 1.85-2.73 3.76V23H8.34V8.31z" />,
@@ -248,6 +250,60 @@ export function BarChart({ bars }) {
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+/* ---------------- animated KPI counter ring ---------------- */
+export function KpiRing({ value, decimals = 0, prefix = '', suffix = '', ring = 100, label }) {
+  const ref = React.useRef(null)
+  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, '')
+  const [prog, setProg] = React.useState(0)
+  const [num, setNum] = React.useState((0).toFixed(decimals))
+  const R = 52
+  const C = 2 * Math.PI * R
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let raf
+    const io = new IntersectionObserver((entries) => {
+      if (!entries[0].isIntersecting) return
+      io.disconnect()
+      const t0 = performance.now()
+      const dur = 1800
+      const tick = (t) => {
+        const p = Math.min((t - t0) / dur, 1)
+        const e = 1 - Math.pow(1 - p, 3)
+        setProg(ring * e)
+        setNum((value * e).toFixed(decimals))
+        if (p < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+    }, { threshold: 0.4 })
+    io.observe(el)
+    return () => { io.disconnect(); cancelAnimationFrame(raf) }
+  }, [value, decimals, ring])
+
+  return (
+    <div className="kpi-ring" ref={ref}>
+      <div className="kr-svgwrap">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id={uid} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ff5e13" />
+              <stop offset="60%" stopColor="#ff8a3d" />
+              <stop offset="100%" stopColor="#ffd166" />
+            </linearGradient>
+          </defs>
+          <circle className="kr-bg" cx="60" cy="60" r={R} />
+          <circle className="kr-fg" cx="60" cy="60" r={R} stroke={`url(#${uid})`}
+            strokeDasharray={C} strokeDashoffset={C - (prog / 100) * C}
+            transform="rotate(-90 60 60)" />
+        </svg>
+        <div className="kr-val">{prefix}{num}<i>{suffix}</i></div>
+      </div>
+      <span className="kr-lbl">{label}</span>
     </div>
   )
 }

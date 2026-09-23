@@ -26,10 +26,8 @@ export default function Sustainability() {
         <div className="wrap">
           <div className="kpi-strip">
             {s.kpis.map((k, i) => (
-              <div className={`kpi reveal${i ? ` d${i}` : ''}`} key={k.label}>
-                <b><Counter value={k.num} decimals={k.decimals} /> <i>{k.suffix}</i></b>
-                <span>{k.label}</span>
-              </div>
+              <KpiRing key={k.label} value={k.num} decimals={k.decimals}
+                suffix={k.suffix} ring={k.ring ?? 100} label={k.label} />
             ))}
           </div>
         </div>

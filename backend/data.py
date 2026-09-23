@@ -590,10 +590,10 @@ SUSTAINABILITY = {
     "sub": ("Our ESG programme is built into the plant — waste-heat power, closed water loops, and a 2035 "
             "net-zero roadmap audited to global standards."),
     "kpis": [
-        {"num": 1.72, "decimals": 2, "suffix": " t", "label": "CO₂ / t Crude Steel"},
-        {"num": 31, "decimals": 0, "suffix": "%", "label": "Renewable Electricity"},
-        {"num": 97.4, "decimals": 1, "suffix": "%", "label": "Solid Waste Utilised"},
-        {"num": 2.1, "decimals": 1, "suffix": "×", "label": "Water Recharged vs Drawn"},
+        {"num": 1.72, "decimals": 2, "suffix": " t", "label": "CO₂ / t Crude Steel", "ring": 68.8},
+        {"num": 31, "decimals": 0, "suffix": "%", "label": "Renewable Electricity", "ring": 31},
+        {"num": 97.4, "decimals": 1, "suffix": "%", "label": "Solid Waste Utilised", "ring": 97.4},
+        {"num": 2.1, "decimals": 1, "suffix": "×", "label": "Water Recharged vs Drawn", "ring": 70},
     ],
     "roadmapTitle": "The Path to 2035 Net Zero",
     "roadmapSub": "Milestones are board-approved, budgeted and independently reviewed each year.",
