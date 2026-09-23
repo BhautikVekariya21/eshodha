@@ -4,15 +4,18 @@ Serves the JSON API that drives the React frontend and, in production,
 serves the built React app (backend/static) as a single-origin site.
 Run:  python3 -m uvicorn main:app --host 0.0.0.0 --port 8000  (from ./backend)
 """
+import os
 import re
 import random
 import time
 from pathlib import Path
 
+import security
+
 import chatbot
 import db
 from data import COMPANY, build_payload
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -32,6 +35,32 @@ app.add_middleware(
 EMAIL_RE = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 UPI_RE = r"^[\w.\-]{2,}@[a-zA-Z]{2,}$"
 MIN_ONLINE_PAYMENT = 1000  # ₹
+
+ADMIN_USER = os.getenv("ESHODHA_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("ESHODHA_ADMIN_PASSWORD", "eshodha2026")
+_admin_tokens: set[str] = set()
+
+
+def _bearer(authorization: str | None) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    return None
+
+
+def _current_user(authorization: str = Header(None)) -> dict:
+    token = _bearer(authorization)
+    if not token:
+        raise HTTPException(status_code=401, detail="Sign in to continue.")
+    user = db.get_user_by_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired — please sign in again.")
+    return user
+
+
+def _require_admin(authorization: str = Header(None)):
+    token = _bearer(authorization)
+    if token not in _admin_tokens:
+        raise HTTPException(status_code=401, detail="Admin sign-in required.")
 
 
 # ---------------------------------------------------------------- health
@@ -448,6 +477,107 @@ def chat(c: ChatIn):
 @app.get("/api/chat/{session_id}")
 def chat_history(session_id: str):
     return db.chat_history(session_id)
+
+
+# ================================================================ CUSTOMER AUTH
+class CustomerReg(BaseModel):
+    name: str = Field(min_length=2)
+    email: str = Field(pattern=EMAIL_RE)
+    password: str = Field(min_length=8)
+    company: str = ""
+
+
+class LoginIn(BaseModel):
+    email: str = Field(pattern=EMAIL_RE)
+    password: str = Field(min_length=1)
+
+
+class AdminLogin(BaseModel):
+    username: str = Field(min_length=2)
+    password: str = Field(min_length=2)
+
+
+@app.post("/api/auth/register")
+def auth_register(c: CustomerReg):
+    if db.get_customer_by_email(c.email.lower()):
+        raise HTTPException(status_code=409, detail="This email is already registered — try signing in.")
+    cid = db.create_customer(c.name.strip(), c.email.lower(), security.hash_password(c.password), c.company.strip())
+    token = db.create_session(cid)
+    user = db.get_customer_by_id(cid)
+    return {"ok": True, "token": token, "user": user, "message": f"Welcome to eShodha, {user['name'].split()[0]}! Your account is ready."}
+
+
+@app.post("/api/auth/login")
+def auth_login(c: LoginIn):
+    user = db.get_customer_by_email(c.email.lower())
+    if not user or not security.verify_password(c.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Incorrect email or password.")
+    token = db.create_session(user["id"])
+    return {"ok": True, "token": token,
+            "user": {"id": user["id"], "name": user["name"], "email": user["email"],
+                     "company": user["company"], "created_at": user["created_at"]},
+            "message": f"Welcome back, {user['name'].split()[0]}!"}
+
+
+@app.post("/api/auth/logout")
+def auth_logout(authorization: str = Header(None)):
+    token = _bearer(authorization)
+    if token:
+        db.delete_session(token)
+    return {"ok": True, "message": "Signed out."}
+
+
+@app.get("/api/auth/me")
+def auth_me(authorization: str = Header(None)):
+    user = _current_user(authorization)
+    return {"user": user}
+
+
+@app.get("/api/auth/overview")
+def auth_overview(authorization: str = Header(None)):
+    user = _current_user(authorization)
+    return {
+        "user": user,
+        "payments": db.payments_by_email(user["email"]),
+        "tickets": db.tickets_by_email(user["email"]),
+        "service_requests": db.service_requests_by_email(user["email"]),
+    }
+
+
+# ================================================================ ADMIN
+@app.post("/api/admin/login")
+def admin_login(a: AdminLogin):
+    if a.username != ADMIN_USER or a.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials.")
+    token = security.new_token()
+    _admin_tokens.add(token)
+    return {"ok": True, "token": token, "username": a.username}
+
+
+@app.get("/api/admin/summary")
+def admin_summary(authorization: str = Header(None)):
+    _require_admin(authorization)
+    return db.admin_summary()
+
+
+@app.get("/api/admin/list/{table}")
+def admin_list(table: str, limit: int = 100, authorization: str = Header(None)):
+    _require_admin(authorization)
+    if table not in db.ADMIN_LIST_COLUMNS:
+        raise HTTPException(status_code=404, detail="Unknown table.")
+    return db.admin_list(table, min(max(limit, 1), 500))
+
+
+class TicketStatus(BaseModel):
+    status: str = Field(pattern="^(open|in_progress|resolved)$")
+
+
+@app.post("/api/admin/tickets/{ref}/status")
+def admin_ticket_status(ref: str, t: TicketStatus, authorization: str = Header(None)):
+    _require_admin(authorization)
+    if not db.update_ticket_status(ref.upper(), t.status):
+        raise HTTPException(status_code=404, detail="Ticket not found.")
+    return {"ok": True, "message": f"Ticket {ref.upper()} set to {t.status.replace('_', ' ')}."}
 
 
 # ---------------------------------------------------------------- SPA serving

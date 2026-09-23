@@ -53,8 +53,15 @@ cd frontend && npm run build
 | POST | `/api/chat` · GET `/api/chat/{session_id}` | Shodha Assist rule-based chat |
 | POST | `/api/services/quote` | Processing price engine (slitting/CTL/blanking/levelling) |
 | POST | `/api/services/request` → `SRV-…` · GET `/api/services/request/{ref}` | Service bookings (lab / VMI / consulting / training) with tracking |
+| POST | `/api/auth/register` `/api/auth/login` `/api/auth/logout` | Customer portal accounts (PBKDF2-hashed passwords, bearer sessions) |
+| GET | `/api/auth/me` · `/api/auth/overview` | Signed-in customer's profile + own payments / tickets / service orders |
+| POST | `/api/admin/login` | Staff sign-in (default `admin` / `eshodha2026`, override with `ESHODHA_ADMIN_USER` / `ESHODHA_ADMIN_PASSWORD`) |
+| GET | `/api/admin/summary` · `/api/admin/list/{table}?limit=` | Admin console: live totals + row-level view of rfqs, payments, tickets, service_requests, dealer_enquiries, tour_bookings, applications, newsletter, customers |
+| POST | `/api/admin/tickets/{ref}/status` | Set ticket `open` / `in_progress` / `resolved` |
 
 All POST bodies are validated with Pydantic (invalid input → HTTP 422). Submissions are stored in `backend/eshodha.db` (gitignored).
+
+**Multi-language:** the UI ships in English + हिंदी — toggle with the `EN/हिं` button in the navbar (choice persists in `localStorage`). Hindi covers navigation, topbar, hero, section headers and footer; API-driven content stays in English. Passwords are stored as salted PBKDF2-SHA256 (200k iterations); sessions are random bearer tokens with 7-day expiry.
 
 ## Pages & scenarios
 
@@ -72,3 +79,5 @@ All POST bodies are validated with Pydantic (invalid input → HTTP 422). Submis
 | `/investors` | Financials, reports, governance, announcements |
 | `/news` | Press releases, media contact |
 | `/contact` | RFQ, dealer enquiry, tour booking (all persisted server-side), map, FAQs |
+| `/account` | **Customer portal** — register / sign in; account overview of own invoices, service orders & tickets |
+| `/admin` | **Admin console** (staff sign-in) — live KPIs, per-source tables with search, inline ticket status control |

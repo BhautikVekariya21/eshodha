@@ -1,8 +1,10 @@
 """SQLite persistence: content submissions, payments, support tickets, chat."""
 import sqlite3
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import security
 
 DB_PATH = Path(__file__).resolve().parent / "eshodha.db"
 _lock = threading.Lock()
@@ -58,6 +60,17 @@ CREATE TABLE IF NOT EXISTS service_requests (
     ref TEXT UNIQUE, type TEXT, name TEXT, email TEXT, phone TEXT, org TEXT,
     details TEXT, preferred_date TEXT, status TEXT DEFAULT 'requested',
     created_at TEXT, updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT, email TEXT UNIQUE, password TEXT, company TEXT,
+    created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    customer_id INTEGER,
+    created_at TEXT,
+    expires_at TEXT
 );
 """
 
@@ -259,6 +272,121 @@ def get_service_request(ref: str) -> dict | None:
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT * FROM service_requests WHERE ref=?", (ref,)).fetchone()
         return dict(row) if row else None
+
+
+# ---------------------------------------------------------------- customers / sessions
+def create_customer(name: str, email: str, password_hash: str, company: str) -> int | None:
+    """Returns customer id, or None when the email is already registered."""
+    try:
+        with _lock, _connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO customers (name, email, password, company, created_at) VALUES (?,?,?,?,?)",
+                (name, email, password_hash, company, _now()))
+            return cur.lastrowid
+    except sqlite3.IntegrityError:
+        return None
+
+
+def get_customer_by_email(email: str) -> dict | None:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM customers WHERE email=?", (email,)).fetchone()
+        return dict(row) if row else None
+
+
+def get_customer_by_id(cid: int) -> dict | None:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT id, name, email, company, created_at FROM customers WHERE id=?", (cid,)).fetchone()
+        return dict(row) if row else None
+
+
+def create_session(customer_id: int, days: int = 7) -> str:
+    token = security.new_token()
+    expires = (datetime.now(timezone.utc) + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    with _lock, _connect() as conn:
+        conn.execute("INSERT INTO sessions (token, customer_id, created_at, expires_at) VALUES (?,?,?,?)",
+                     (token, customer_id, _now(), expires))
+    return token
+
+
+def get_user_by_token(token: str) -> dict | None:
+    with _lock, _connect() as conn:
+        row = conn.execute(
+            "SELECT c.id FROM sessions s JOIN customers c ON c.id = s.customer_id "
+            "WHERE s.token=? AND s.expires_at > ?", (token, _now())).fetchone()
+        if not row:
+            return None
+        cid = row[0]
+    return get_customer_by_id(cid)
+
+
+def delete_session(token: str):
+    with _lock, _connect() as conn:
+        conn.execute("DELETE FROM sessions WHERE token=?", (token,))
+
+
+def tickets_by_email(email: str) -> list[dict]:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ref, subject, category, priority, status, created_at "
+            "FROM tickets WHERE email=? ORDER BY id DESC LIMIT 25", (email,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def service_requests_by_email(email: str) -> list[dict]:
+    with _lock, _connect() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ref, type, status, details, created_at "
+            "FROM service_requests WHERE email=? ORDER BY id DESC LIMIT 25", (email,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------- admin
+ADMIN_LIST_COLUMNS = {
+    "rfqs": ["id", "ref", "name", "company", "email", "phone", "product", "quantity", "delivery", "created_at"],
+    "payments": ["id", "ref", "pi_number", "customer_name", "email", "amount", "currency", "method", "status", "txn_id", "created_at"],
+    "tickets": ["id", "ref", "name", "email", "category", "priority", "status", "subject", "created_at"],
+    "service_requests": ["id", "ref", "type", "name", "email", "org", "status", "created_at"],
+    "dealer_enquiries": ["id", "ref", "firm", "owner", "email", "phone", "territory", "created_at"],
+    "tour_bookings": ["id", "ref", "name", "email", "org", "preferred_date", "group_size", "purpose", "created_at"],
+    "applications": ["id", "ref", "job", "name", "email", "phone", "created_at"],
+    "newsletter": ["id", "email", "created_at"],
+    "customers": ["id", "name", "email", "company", "created_at"],
+}
+
+
+def admin_summary() -> dict:
+    counts = {}
+    with _lock, _connect() as conn:
+        for table in list(ADMIN_LIST_COLUMNS) + ["chat_messages"]:
+            counts[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        revenue = conn.execute("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='success'").fetchone()[0]
+        pending = conn.execute(
+            "SELECT COUNT(*) FROM payments WHERE status IN ('pending','pending_verification')").fetchone()[0]
+        open_tickets = conn.execute(
+            "SELECT COUNT(*) FROM tickets WHERE status != 'resolved'").fetchone()[0]
+        urgent = conn.execute(
+            "SELECT COUNT(*) FROM tickets WHERE priority='urgent' AND status != 'resolved'").fetchone()[0]
+    return {"counts": counts, "collected": revenue, "pending_payments": pending,
+            "open_tickets": open_tickets, "urgent_tickets": urgent}
+
+
+def admin_list(table: str, limit: int = 100) -> dict:
+    cols = ADMIN_LIST_COLUMNS[table]
+    col_sql = ", ".join(cols)
+    with _lock, _connect() as conn:
+        rows = conn.execute(f"SELECT {col_sql} FROM {table} ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        return {"columns": cols, "rows": [dict(zip(cols, r)) for r in rows]}
+
+
+def update_ticket_status(ref: str, status: str) -> bool:
+    with _lock, _connect() as conn:
+        cur = conn.execute("UPDATE tickets SET status=?, updated_at=? WHERE ref=?",
+                           (status, _now(), ref))
+        return cur.rowcount > 0
 
 
 init()

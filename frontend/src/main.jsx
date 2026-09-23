@@ -1,8 +1,8 @@
 import React from 'react'
-import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { LangProvider } from './i18n.jsx'
 import Layout from './components/Layout.jsx'
-import { useGlobalReveal } from './hooks.jsx'
 import Home from './pages/Home.jsx'
 import About from './pages/About.jsx'
 import Products from './pages/Products.jsx'
@@ -11,31 +11,17 @@ import Infrastructure from './pages/Infrastructure.jsx'
 import Quality from './pages/Quality.jsx'
 import Industries from './pages/Industries.jsx'
 import Sustainability from './pages/Sustainability.jsx'
+import Services from './pages/Services.jsx'
 import Careers from './pages/Careers.jsx'
 import Investors from './pages/Investors.jsx'
 import News from './pages/News.jsx'
 import Contact from './pages/Contact.jsx'
-import Services from './pages/Services.jsx'
 import Payments from './pages/Payments.jsx'
 import Support from './pages/Support.jsx'
+import Account from './pages/Account.jsx'
+import Admin from './pages/Admin.jsx'
+import { useGlobalReveal } from './hooks.jsx'
 import './styles.css'
-
-function Root() {
-  useGlobalReveal()
-  // dismiss the static preloader from index.html
-  React.useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const wait = reduce ? 200 : 1500
-    const t1 = setTimeout(() => {
-      const p = document.getElementById('preloader')
-      if (!p) return
-      p.classList.add('done')
-      setTimeout(() => p.remove(), 650)
-    }, wait)
-    return () => clearTimeout(t1)
-  }, [])
-  return <Layout />
-}
 
 const NotFound = () => (
   <section className="section"><div className="wrap" style={{ textAlign: 'center' }}>
@@ -45,32 +31,50 @@ const NotFound = () => (
   </div></section>
 )
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Root />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: 'about', element: <About /> },
-      { path: 'products', element: <Products /> },
-      { path: 'process', element: <Process /> },
-      { path: 'infrastructure', element: <Infrastructure /> },
-      { path: 'quality', element: <Quality /> },
-      { path: 'industries', element: <Industries /> },
-      { path: 'sustainability', element: <Sustainability /> },
-      { path: 'careers', element: <Careers /> },
-      { path: 'investors', element: <Investors /> },
-      { path: 'news', element: <News /> },
-      { path: 'contact', element: <Contact /> },
-      { path: 'payments', element: <Payments /> },
-      { path: 'support', element: <Support /> },
-      { path: '*', element: <NotFound /> },
-    ],
-  },
-])
+function Root() {
+  useGlobalReveal()
+  const { pathname } = useLocation()
+  React.useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const pre = document.getElementById('preloader')
+    if (pre) {
+      const t = setTimeout(() => { pre.classList.add('done'); setTimeout(() => pre.remove(), 600) }, reduced ? 200 : 1500)
+      return () => clearTimeout(t)
+    }
+  }, [])
+  React.useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/process" element={<Process />} />
+        <Route path="/infrastructure" element={<Infrastructure />} />
+        <Route path="/quality" element={<Quality />} />
+        <Route path="/industries" element={<Industries />} />
+        <Route path="/sustainability" element={<Sustainability />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/investors" element={<Investors />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  )
+}
 
-createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <BrowserRouter>
+      <LangProvider>
+        <Root />
+      </LangProvider>
+    </BrowserRouter>
   </React.StrictMode>
 )
